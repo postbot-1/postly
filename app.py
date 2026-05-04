@@ -1,39 +1,23 @@
-from flask import Flask, request, jsonify
-import os
+from flask import Flask, jsonify
 from app.core.executor import execute_post
 
 app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 @app.route("/")
 def home():
-    return "Postly API Running 🚀"
+    return jsonify({"status": "Postly API is running"})
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
-    file = request.files["file"]
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filepath)
-    return jsonify({"filepath": filepath})
-
-
-@app.route("/post", methods=["POST"])
-def post():
-    data = request.json
-
-    results = execute_post(
-        data["filepath"],
-        data.get("caption", ""),
-        data.get("title", ""),
-        data.get("accounts", []),
-        data.get("accounts_data", {})
-    )
-
-    return jsonify(results)
+@app.route("/run", methods=["GET"])
+def run_post():
+    try:
+        result = execute_post()
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    # IMPORTANT: Railway requires 0.0.0.0
+    app.run(host="0.0.0.0", port=5000)
